@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ипотечный калькулятор</title>
-    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="calculator">
@@ -12,11 +12,20 @@
 
         <div class="main-inputs">
             <div class="input-group">
-                <label>Сумма кредита</label>
+                <label>Стоимость лота</label>
                 <div class="input-wrapper">
-                    <input type="number" id="loanAmount" value="10400000" min="0" step="100000">
+                    <input type="number" id="propertyPrice" value="10000000" min="0" step="100000">
                     <span>₽</span>
                 </div>
+            </div>
+
+            <div class="input-group">
+                <label>Первоначальный взнос</label>
+                <div class="input-wrapper">
+                    <input type="number" id="downPayment" value="2000000" min="0" step="100000">
+                    <span>₽</span>
+                </div>
+                <div class="hint" id="downPaymentHint">20.1% от стоимости</div>
             </div>
 
             <div class="input-group">
@@ -42,11 +51,14 @@
                 <button class="add-btn" onclick="addEarlyPayment()">+ Добавить</button>
             </div>
             <div id="earlyPaymentsList">
-                <!-- Сюда будут добавляться поля для досрочных погашений -->
             </div>
         </div>
 
         <div class="results">
+            <div class="result-item">
+                <div class="result-label">Сумма кредита</div>
+                <div class="result-value" id="loanAmount">8 000 000 ₽</div>
+            </div>
             <div class="result-item">
                 <div class="result-label">Ежемесячный платёж</div>
                 <div class="result-value accent" id="monthlyPayment">0 ₽</div>
@@ -87,6 +99,6 @@
         </div>
     </div>
 
-    <script src="./main.js"></script>
+    <script src="main.js"></script>
 </body>
 </html>

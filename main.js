@@ -1,5 +1,7 @@
 let earlyPayments = [];
 
+const MIN_DOWN_PAYMENT_PERCENT = 20.1;
+
 function addEarlyPayment() {
     const newPayment = {
         month: 12,
@@ -60,12 +62,65 @@ function formatMoney(amount) {
     return Math.round(amount).toLocaleString('ru-RU') + ' ₽';
 }
 
+function validateDownPayment(propertyPrice, downPayment) {
+    const minDownPayment = propertyPrice * MIN_DOWN_PAYMENT_PERCENT / 100;
+    const hintElement = document.getElementById('downPaymentHint');
+    
+    if (downPayment < minDownPayment) {
+        hintElement.style.color = '#dc2626';
+        return minDownPayment;
+    } else {
+        hintElement.style.color = '#6b7280';
+        return downPayment;
+    }
+}
+
+function calculateLoanAmount() {
+    const propertyPrice = parseFloat(document.getElementById('propertyPrice').value) || 0;
+    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
+    
+    // Проверяем минимальный взнос
+    const validDownPayment = validateDownPayment(propertyPrice, downPayment);
+    
+    // Если взнос меньше минимального, обновляем поле
+    if (validDownPayment > downPayment) {
+        document.getElementById('downPayment').value = Math.round(validDownPayment);
+        downPayment = validDownPayment;
+    }
+    
+    const loanAmount = Math.max(0, propertyPrice - downPayment);
+    document.getElementById('loanAmount').textContent = formatMoney(loanAmount);
+    
+    return loanAmount;
+}
+
 function calculateMortgage() {
-    let loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
-    let annualRate = parseFloat(document.getElementById('interestRate').value) || 0;
-    let years = parseFloat(document.getElementById('loanTerm').value) || 1;
+    const propertyPrice = parseFloat(document.getElementById('propertyPrice').value) || 0;
+    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
+    const annualRate = parseFloat(document.getElementById('interestRate').value) || 0;
+    const years = parseFloat(document.getElementById('loanTerm').value) || 1;
+
+    // Проверяем минимальный взнос
+    const validDownPayment = validateDownPayment(propertyPrice, downPayment);
+    
+    // Если взнос меньше минимального, обновляем поле
+    if (validDownPayment > downPayment) {
+        document.getElementById('downPayment').value = Math.round(validDownPayment);
+        downPayment = validDownPayment;
+    }
+    
+    const loanAmount = propertyPrice - downPayment;
+    document.getElementById('loanAmount').textContent = formatMoney(loanAmount);
 
     if (loanAmount <= 0 || annualRate <= 0 || years < 1) {
+        // Если кредит не нужен (первоначальный взнос покрывает всю стоимость)
+        if (loanAmount <= 0) {
+            document.getElementById('monthlyPayment').textContent = '0 ₽';
+            document.getElementById('totalOverpayment').textContent = '0 ₽';
+            document.getElementById('totalPayment').textContent = formatMoney(downPayment);
+            document.getElementById('actualTerm').textContent = '0 месяцев';
+            renderSchedule([]);
+        }
         return;
     }
 
@@ -140,7 +195,7 @@ function calculateMortgage() {
 
     document.getElementById('monthlyPayment').textContent = formatMoney(schedule[0]?.payment || 0);
     document.getElementById('totalOverpayment').textContent = formatMoney(totalInterest);
-    document.getElementById('totalPayment').textContent = formatMoney(totalPayment);
+    document.getElementById('totalPayment').textContent = formatMoney(totalPayment + downPayment);
     
     let actualMonths = schedule.length;
     let actualYears = Math.floor(actualMonths / 12);
@@ -195,10 +250,13 @@ function renderSchedule(schedule) {
     tbody.innerHTML = html;
 }
 
-document.getElementById('loanAmount').addEventListener('input', calculateMortgage);
+// Обработчики событий
+document.getElementById('propertyPrice').addEventListener('input', calculateMortgage);
+document.getElementById('downPayment').addEventListener('input', calculateMortgage);
 document.getElementById('interestRate').addEventListener('input', calculateMortgage);
 document.getElementById('loanTerm').addEventListener('input', calculateMortgage);
 
+// Инициализация
 window.onload = function() {
     earlyPayments.push({
         month: 12,
