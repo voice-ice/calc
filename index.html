@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ипотечный калькулятор</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="calculator">
+        <h1>Ипотечный калькулятор</h1>
+
+        <div class="main-inputs">
+            <div class="input-group">
+                <label>Сумма кредита</label>
+                <div class="input-wrapper">
+                    <input type="number" id="loanAmount" value="10400000" min="0" step="100000">
+                    <span>₽</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Процентная ставка</label>
+                <div class="input-wrapper">
+                    <input type="number" id="interestRate" value="21.4" min="0.1" step="0.1">
+                    <span>%</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Срок кредита</label>
+                <div class="input-wrapper">
+                    <input type="number" id="loanTerm" value="30" min="1" max="30" step="1">
+                    <span>лет</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="early-payment">
+            <div class="early-header">
+                <h3>Досрочные погашения</h3>
+                <button class="add-btn" onclick="addEarlyPayment()">+ Добавить</button>
+            </div>
+            <div id="earlyPaymentsList">
+                <!-- Сюда будут добавляться поля для досрочных погашений -->
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="result-item">
+                <div class="result-label">Ежемесячный платёж</div>
+                <div class="result-value accent" id="monthlyPayment">0 ₽</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Общая переплата</div>
+                <div class="result-value warning" id="totalOverpayment">0 ₽</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Общая сумма выплат</div>
+                <div class="result-value" id="totalPayment">0 ₽</div>
+            </div>
+            <div class="result-item">
+                <div class="result-label">Фактический срок</div>
+                <div class="result-value" id="actualTerm">15 лет</div>
+            </div>
+        </div>
+
+        <h2>График платежей</h2>
+        <div class="payment-schedule">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Месяц</th>
+                        <th>Платёж</th>
+                        <th>Основной долг</th>
+                        <th>Проценты</th>
+                        <th>Остаток долга</th>
+                        <th>Досрочно</th>
+                    </tr>
+                </thead>
+                <tbody id="scheduleBody">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 24px;">Введите параметры для расчета</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="./main.js"></script>
+</body>
+</html>
