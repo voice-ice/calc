@@ -3,102 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ипотечный калькулятор</title>
     <link rel="stylesheet" href="style.css">
+    <title>Ипотечный калькулятор</title>
+ 
 </head>
 <body>
-    <div class="calculator">
-        <h1>Ипотечный калькулятор</h1>
 
-        <div class="main-inputs">
-            <div class="input-group">
-                <label>Стоимость лота</label>
-                <div class="input-wrapper">
-                    <input type="number" id="propertyPrice" value="10000000" min="0" step="100000">
-                    <span>₽</span>
-                </div>
-            </div>
+<div class="calculator">
+    <h1>ИПОТЕЧНЫЙ КАЛЬКУЛЯТОР</h1>
 
-            <div class="input-group">
-                <label>Первоначальный взнос</label>
-                <div class="input-wrapper">
-                    <input type="number" id="downPayment" value="2000000" min="0" step="100000">
-                    <span>₽</span>
-                </div>
-                <div class="hint" id="downPaymentHint">20.1% от стоимости</div>
-            </div>
-
-            <div class="input-group">
-                <label>Процентная ставка</label>
-                <div class="input-wrapper">
-                    <input type="number" id="interestRate" value="21.4" min="0.1" step="0.1">
-                    <span>%</span>
-                </div>
-            </div>
-
-            <div class="input-group">
-                <label>Срок кредита</label>
-                <div class="input-wrapper">
-                    <input type="number" id="loanTerm" value="30" min="1" max="30" step="1">
-                    <span>лет</span>
-                </div>
-            </div>
+    <div class="mortgage-type">
+        <div class="type-switch">
+            <label>
+                <input type="radio" name="mortgageType" value="annuity" checked> Базовая ипотека
+            </label>
+            <label>
+                <input type="radio" name="mortgageType" value="trench"> Траншевая ипотека
+            </label>
         </div>
-
-        <div class="early-payment">
-            <div class="early-header">
-                <h3>Досрочные погашения</h3>
-                <button class="add-btn" onclick="addEarlyPayment()">+ Добавить</button>
+        <div class="trench-info" id="trenchInfo" style="display: none;">
+            <div class="trench-editor" id="trenchEditor">
+                <div id="trenchControls"></div>
             </div>
-            <div id="earlyPaymentsList">
-            </div>
-        </div>
-
-        <div class="results">
-            <div class="result-item">
-                <div class="result-label">Сумма кредита</div>
-                <div class="result-value" id="loanAmount">8 000 000 ₽</div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">Ежемесячный платёж</div>
-                <div class="result-value accent" id="monthlyPayment">0 ₽</div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">Общая переплата</div>
-                <div class="result-value warning" id="totalOverpayment">0 ₽</div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">Общая сумма выплат</div>
-                <div class="result-value" id="totalPayment">0 ₽</div>
-            </div>
-            <div class="result-item">
-                <div class="result-label">Фактический срок</div>
-                <div class="result-value" id="actualTerm">15 лет</div>
-            </div>
-        </div>
-
-        <h2>График платежей</h2>
-        <div class="payment-schedule">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Месяц</th>
-                        <th>Платёж</th>
-                        <th>Основной долг</th>
-                        <th>Проценты</th>
-                        <th>Остаток долга</th>
-                        <th>Досрочно</th>
-                    </tr>
-                </thead>
-                <tbody id="scheduleBody">
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 24px;">Введите параметры для расчета</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
-    <script src="main.js"></script>
+    <div class="main-inputs">
+        <div class="input-group">
+            <label>Стоимость лота</label>
+            <div class="input-wrapper">
+                <input type="number" id="propertyPrice" value="" placeholder="Введите сумму" min="0" step="100000">
+                <span>₽</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Первоначальный взнос (мин. 20.1%)</label>
+            <div class="input-wrapper">
+                <input type="number" id="downPayment" value="" placeholder="Введите сумму" min="0" step="100000">
+                <span>₽</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Процентная ставка</label>
+            <div class="input-wrapper">
+                <input type="number" id="interestRate" value="20.7" min="0.1" step="0.1">
+                <span>%</span>
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>Срок кредита</label>
+            <div class="input-wrapper">
+                <input type="number" id="loanTerm" value="30" min="1" max="30" step="1">
+                <span>лет</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="results">
+        <div class="result-item">
+            <div class="result-label">Сумма кредита</div>
+            <div class="result-value" id="loanAmount">0 ₽</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Ежемесячный платёж</div>
+            <div class="result-value accent" id="monthlyPayment">0 ₽</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Общая переплата</div>
+            <div class="result-value warning" id="totalOverpayment">0 ₽</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Общая сумма выплат</div>
+            <div class="result-value" id="totalPayment">0 ₽</div>
+        </div>
+        <div class="result-item">
+            <div class="result-label">Фактический срок</div>
+            <div class="result-value" id="actualTerm">0 лет</div>
+        </div>
+    </div>
+
+    <h2>График платежей (клик по строке для досрочного погашения)</h2>
+    <div class="schedule-container">
+        <table id="paymentTable">
+            <thead>
+                <tr>
+                    <th>Месяц</th>
+                    <th>Платёж</th>
+                    <th>Основной долг</th>
+                    <th>Проценты</th>
+                    <th>Остаток долга</th>
+                    <th>Досрочно</th>
+                    <th>Транш</th>
+                </tr>
+            </thead>
+            <tbody id="scheduleBody">
+                <tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="earlyModal" class="modal">
+    <div class="modal-content">
+        <h3 id="modalTitle">Досрочное погашение</h3>
+        <label>Сумма погашения (₽):</label>
+        <input type="number" id="earlyAmount" step="10000" value="100000">
+        <label>Тип погашения:</label>
+        <select id="earlyType">
+            <option value="term">Уменьшить срок</option>
+            <option value="payment">Уменьшить платёж</option>
+        </select>
+        <div class="modal-buttons">
+            <button class="btn-save" onclick="saveEarlyPayment()">Сохранить</button>
+            <button class="btn-delete" id="deleteBtn" onclick="deleteEarlyPayment()" style="display:none;">Удалить</button>
+            <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<script src="main.js">
+
+</script>
+
 </body>
 </html>
