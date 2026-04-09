@@ -36,14 +36,11 @@ function updatePrices() {
     let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
     let discountRub = parseFloat(document.getElementById('discountRub').value) || 0;
     
-    // Стоимость со скидкой = Базовая стоимость - процентная скидка - рублевая скидка
     let discountFromPercent = basePrice * (discountPercent / 100);
     let discountedPrice = Math.max(0, basePrice - discountFromPercent - discountRub);
     
-    // ДВОУ = 3% от стоимости со скидкой
     let dvou = discountedPrice * DVOU_PERCENT / 100;
     
-    // Стоимость лота в ДДУ = Стоимость со скидкой - ДВОУ
     let propertyPrice = discountedPrice - dvou;
     
     document.getElementById('discountedPrice').value = Math.round(discountedPrice);
