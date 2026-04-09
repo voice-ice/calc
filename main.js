@@ -38,9 +38,7 @@ function updatePrices() {
     
     let discountFromPercent = basePrice * (discountPercent / 100);
     let discountedPrice = Math.max(0, basePrice - discountFromPercent - discountRub);
-    
     let dvou = discountedPrice * DVOU_PERCENT / 100;
-    
     let propertyPrice = discountedPrice - dvou;
     
     document.getElementById('discountedPrice').value = Math.round(discountedPrice);
@@ -453,9 +451,10 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
     });
 
     let currentMonthlyPayment = 0;
+    let remainingMonths = monthsTotal;
     
     if (activeDebt > 0) {
-        currentMonthlyPayment = calculateMonthlyPayment(activeDebt, monthlyRate, monthsTotal);
+        currentMonthlyPayment = calculateMonthlyPayment(activeDebt, monthlyRate, remainingMonths);
     }
 
     let monthCounter = 1;
@@ -464,11 +463,12 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
     while (activeDebt > 0.01 && monthCounter <= maxMonths) {
         let trenchAdded = 0;
         
+        // Выдача траншей
         for (let trench of trenchSchedule) {
             if (trench.month > 0 && trench.month === monthCounter - 1 && trench.amount > 0) {
                 activeDebt += trench.amount;
                 trenchAdded += trench.amount;
-                let remainingMonths = Math.max(1, monthsTotal - monthCounter + 1);
+                remainingMonths = Math.max(1, monthsTotal - monthCounter + 1);
                 currentMonthlyPayment = calculateMonthlyPayment(activeDebt, monthlyRate, remainingMonths);
             }
         }
@@ -504,8 +504,22 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
                     break;
                 }
                 
-                if (ep.type === 'payment') {
-                    let remMonths = Math.max(1, monthsTotal - monthCounter);
+                if (ep.type === 'term') {
+                    let fixedPayment = currentMonthlyPayment;
+                    
+                    if (activeDebt > 0 && monthlyRate > 0 && fixedPayment > activeDebt * monthlyRate) {
+                        let newMonths = Math.log(fixedPayment / (fixedPayment - activeDebt * monthlyRate)) / Math.log(1 + monthlyRate);
+                        remainingMonths = Math.max(1, Math.ceil(newMonths));
+                    } else {
+                        remainingMonths = Math.max(1, Math.ceil(activeDebt / fixedPayment));
+                    }
+                    
+                    remainingMonths = Math.min(remainingMonths, monthsTotal * 2);
+                    currentMonthlyPayment = fixedPayment;
+                }
+                // Уменьшение платежа
+                else if (ep.type === 'payment') {
+                    let remMonths = Math.max(1, remainingMonths);
                     if (activeDebt > 0 && monthlyRate > 0) {
                         currentMonthlyPayment = calculateMonthlyPayment(activeDebt, monthlyRate, remMonths);
                     } else if (activeDebt > 0) {
@@ -529,7 +543,77 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
         if (activeDebt <= 0.01) break;
     }
 
-    displayResults(schedule, totalInterest, totalPayment, downPayment);
+    let actualMonths = 0;
+    let tempDebt = totalLoanAmount;
+    let tempRemainingMonths = monthsTotal;
+    let tempMonthlyPayment = calculateMonthlyPayment(tempDebt, monthlyRate, tempRemainingMonths);
+    let tempMonth = 1;
+    let tempEarlyMap = new Map();
+    sortedEarlyPayments.forEach(p => {
+        if (!tempEarlyMap.has(p.month)) tempEarlyMap.set(p.month, []);
+        tempEarlyMap.get(p.month).push({ ...p });
+    });
+    
+    let tempTrenchSchedule = [];
+    for (let trench of trenches) {
+        let amount = totalLoanAmount * trench.share;
+        if (amount > 0) {
+            tempTrenchSchedule.push({ month: trench.month, amount: amount });
+        }
+    }
+    
+    while (tempDebt > 0.01 && tempMonth <= maxMonths) {
+        for (let trench of tempTrenchSchedule) {
+            if (trench.month > 0 && trench.month === tempMonth - 1 && trench.amount > 0) {
+                tempDebt += trench.amount;
+                tempRemainingMonths = Math.max(1, monthsTotal - tempMonth + 1);
+                tempMonthlyPayment = calculateMonthlyPayment(tempDebt, monthlyRate, tempRemainingMonths);
+            }
+        }
+        
+        let interestPay = tempDebt * monthlyRate;
+        let principalPay = Math.min(tempMonthlyPayment - interestPay, tempDebt);
+        if (principalPay < 0) principalPay = 0;
+        tempDebt -= principalPay;
+        
+        let earlyTemp = tempEarlyMap.get(tempMonth) || [];
+        for (let ep of earlyTemp) {
+            let earlyAmt = Math.min(ep.amount, tempDebt);
+            if (earlyAmt > 0) {
+                tempDebt -= earlyAmt;
+                if (ep.type === 'term' && tempDebt > 0) {
+                    let fixedPay = tempMonthlyPayment;
+                    if (monthlyRate > 0 && fixedPay > tempDebt * monthlyRate) {
+                        let newM = Math.log(fixedPay / (fixedPay - tempDebt * monthlyRate)) / Math.log(1 + monthlyRate);
+                        tempRemainingMonths = Math.max(1, Math.ceil(newM));
+                        tempMonthlyPayment = fixedPay;
+                    } else {
+                        tempRemainingMonths = Math.max(1, Math.ceil(tempDebt / fixedPay));
+                    }
+                } else if (ep.type === 'payment' && tempDebt > 0) {
+                    let remM = Math.max(1, tempRemainingMonths);
+                    tempMonthlyPayment = calculateMonthlyPayment(tempDebt, monthlyRate, remM);
+                }
+            }
+        }
+        
+        tempMonth++;
+        if (tempDebt <= 0.01) break;
+    }
+    actualMonths = tempMonth - 1;
+    
+    document.getElementById('monthlyPayment').textContent = formatMoney(schedule[0]?.payment || 0);
+    document.getElementById('totalOverpayment').textContent = formatMoney(totalInterest);
+    document.getElementById('totalPayment').textContent = formatMoney(totalPayment + downPayment);
+    
+    let yearsVal = Math.floor(actualMonths / 12);
+    let monthsVal = actualMonths % 12;
+    let termText = '';
+    if (yearsVal > 0) termText += `${yearsVal} ${getYearWord(yearsVal)}`;
+    if (monthsVal > 0) termText += ` ${monthsVal} ${getMonthWord(monthsVal)}`;
+    if (termText === '') termText = '0 месяцев';
+    document.getElementById('actualTerm').textContent = termText;
+    
     renderSchedule(schedule);
 }
 
