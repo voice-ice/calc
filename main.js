@@ -6,18 +6,19 @@ const MIN_DOWN_PAYMENT_PERCENT = 20.1;
 const DISCOUNT_RATE = 19.7;
 const STANDARD_RATE = 20.7;
 const DISCOUNT_THRESHOLD = 50.1;
+const DVOU_PERCENT = 3;
 
 let annuityValues = {
-    propertyPrice: '',
-    downPayment: '',
+    propertyPrice: '0',
+    downPayment: '0',
     interestRate: 20.7,
     termValue: 30,
     termUnit: 'years'
 };
 
 let trenchValues = {
-    propertyPrice: '',
-    downPayment: '',
+    propertyPrice: '0',
+    downPayment: '0',
     interestRate: 20.7,
     termValue: 30,
     termUnit: 'years'
@@ -30,8 +31,29 @@ let trenches = [
     { month: 12, share: 0.249 }   
 ];
 
+function updatePrices() {
+    let basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
+    let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
+    
+    let discountedPrice = basePrice * (1 - discountPercent / 100);
+    let dvou = discountedPrice * DVOU_PERCENT / 100;
+    let propertyPrice = discountedPrice; 
+    
+    document.getElementById('discountedPrice').value = Math.round(discountedPrice);
+    document.getElementById('dvou').value = Math.round(dvou);
+    document.getElementById('propertyPrice').value = Math.round(propertyPrice);
+    
+    setMinDownPayment();
+    
+    if (currentMortgageType === 'trench') {
+        renderTrenchControls();
+    }
+    calculateMortgage();
+    saveCurrentValues();
+}
+
 function updateInterestRateByDownPayment() {
-    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let propertyPrice = getCurrentPropertyPrice();
     let downPayment = Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0);
     let interestRateInput = document.getElementById('interestRate');
     let rateInfo = document.getElementById('rateInfo');
@@ -55,6 +77,10 @@ function updateInterestRateByDownPayment() {
     } else {
         if (rateInfo) rateInfo.classList.remove('show');
     }
+}
+
+function getCurrentPropertyPrice() {
+    return Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
 }
 
 function saveCurrentValues() {
@@ -84,7 +110,7 @@ function loadValuesForCurrentType() {
 }
 
 function setMinDownPayment() {
-    let propertyPrice = parseFloat(document.getElementById('propertyPrice').value) || 0;
+    let propertyPrice = getCurrentPropertyPrice();
     let downPaymentInput = document.getElementById('downPayment');
     
     if (propertyPrice > 0) {
@@ -94,6 +120,8 @@ function setMinDownPayment() {
         if (currentDownPayment === 0 || currentDownPayment < minDownPayment) {
             downPaymentInput.value = minDownPayment;
         }
+    } else {
+        downPaymentInput.value = 0;
     }
 }
 
@@ -180,10 +208,9 @@ function deleteEarlyPayment() {
     calculateMortgage();
 }
 
-// Отрисовка контролов траншей
 function renderTrenchControls() {
     const container = document.getElementById('trenchControls');
-    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let propertyPrice = getCurrentPropertyPrice();
     let downPayment = Math.min(propertyPrice, Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0));
     let annualRate = Math.max(0.01, parseFloat(document.getElementById('interestRate').value) || 0);
     let monthsTotal = getTotalMonths();
@@ -196,7 +223,6 @@ function renderTrenchControls() {
     
     let loanAmount = propertyPrice - downPayment;
     
-    // Рассчитываем платежи после каждого транша
     let trenchPayments = [];
     let accumulatedDebt = 0;
     
@@ -205,7 +231,6 @@ function renderTrenchControls() {
         let amount = loanAmount * trench.share;
         accumulatedDebt += amount;
         
-        // Оставшиеся месяцы после выдачи этого транша
         let remainingMonths = Math.max(1, monthsTotal - trench.month);
         let monthlyPayment = 0;
         
@@ -238,7 +263,7 @@ function renderTrenchControls() {
         let paymentValue = trenchPayments[idx] && trenchPayments[idx].payment > 0 ? formatMoney(trenchPayments[idx].payment) : '0 ₽';
         
         html += `
-            <div class="trench-row-edit" style="grid-template-columns: 140px 1fr 100px 1fr 80px;">
+            <div class="trench-row-edit">
                 <label>${monthName}:</label>
                 <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0;">
                 <input type="text" value="${paymentValue}" readonly style="background:#e8f0fe; font-weight:bold; color:#2c6e2c;">
@@ -254,7 +279,7 @@ function formatMoney(amount) {
 }
 
 function validateAndFixDownPayment() {
-    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let propertyPrice = getCurrentPropertyPrice();
     let downPaymentInput = document.getElementById('downPayment');
     let userValue = parseFloat(downPaymentInput.value) || 0;
     let downPayment = Math.min(propertyPrice, Math.max(0, userValue));
@@ -278,7 +303,7 @@ function calculateMonthlyPayment(debt, rate, remainingMonths) {
 }
 
 function calculateMortgage() {
-    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let propertyPrice = getCurrentPropertyPrice();
     let downPaymentRaw = Math.min(propertyPrice, Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0));
     
     let minDownPayment = propertyPrice * MIN_DOWN_PAYMENT_PERCENT / 100;
@@ -602,6 +627,17 @@ window.onclick = function(event) {
     }
 }
 
+
+document.getElementById('basePrice').addEventListener('input', updatePrices);
+document.getElementById('discountPercent').addEventListener('input', updatePrices);
+
+document.getElementById('basePrice').addEventListener('click', function() {
+    this.select();
+});
+document.getElementById('discountPercent').addEventListener('click', function() {
+    this.select();
+});
+
 document.getElementById('propertyPrice').addEventListener('input', () => {
     setMinDownPayment();
     validateAndFixDownPayment();
@@ -623,8 +659,12 @@ document.getElementById('downPayment').addEventListener('input', () => {
     saveCurrentValues();
 });
 
+document.getElementById('downPayment').addEventListener('click', function() {
+    this.select();
+});
+
 document.getElementById('downPayment').addEventListener('blur', function() {
-    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let propertyPrice = getCurrentPropertyPrice();
     let minDownPayment = propertyPrice * MIN_DOWN_PAYMENT_PERCENT / 100;
     let currentValue = parseFloat(this.value) || 0;
     
@@ -670,6 +710,7 @@ window.onload = function() {
     currentMortgageType = 'annuity';
     document.querySelector('input[value="annuity"]').checked = true;
     document.getElementById('trenchInfo').style.display = 'none';
+    updatePrices(); 
     loadValuesForCurrentType();
     calculateMortgage();
 };

@@ -82,13 +82,14 @@ h2 {
 
 .trench-row-edit {
     display: grid;
-    grid-template-columns: 160px 1fr 90px;
+    grid-template-columns: 140px 1fr 100px 1fr 80px;
     gap: 10px;
     align-items: center;
     margin-bottom: 8px;
     padding: 6px;
     background: white;
     border: 1px solid #ddd;
+    border-radius: 6px;
 }
 
 .trench-row-edit label {
@@ -98,18 +99,30 @@ h2 {
 }
 
 .trench-row-edit input {
-    padding: 4px 8px;
+    padding: 6px 8px;
     border: 1px solid #aaa;
     font-size: 13px;
     width: 100%;
-    background: #f0f0f0;
-    cursor: default;
 }
 
-.trench-percent {
-    font-size: 12px;
-    color: #666;
-    text-align: right;
+.price-block {
+    background: #fff8e1;
+    border: 1px solid #ffd54f;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.price-block h3 {
+    font-size: 14px;
+    margin-bottom: 10px;
+    color: #e65100;
+}
+
+.price-inputs {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
 }
 
 .main-inputs {
@@ -123,6 +136,7 @@ h2 {
     background: #fff;
     padding: 10px;
     border: 1px solid #ccc;
+    border-radius: 6px;
 }
 
 label {
@@ -145,6 +159,7 @@ label {
     border: 1px solid #aaa;
     background: white;
     font-size: 14px;
+    border-radius: 4px;
 }
 
 .input-wrapper input:focus {
@@ -172,6 +187,7 @@ label {
     border: 1px solid #aaa;
     background: white;
     font-size: 14px;
+    border-radius: 4px;
 }
 
 .term-wrapper select {
@@ -181,11 +197,23 @@ label {
     background: white;
     font-size: 14px;
     cursor: pointer;
+    border-radius: 4px;
 }
 
 .error-border {
     border-color: #c44 !important;
     background: #fff0f0 !important;
+}
+
+.rate-info {
+    font-size: 11px;
+    color: #2c6e2c;
+    margin-top: 4px;
+    display: none;
+}
+
+.rate-info.show {
+    display: block;
 }
 
 .results {
@@ -195,14 +223,14 @@ label {
     margin-bottom: 20px;
     padding: 15px;
     background: #2c3e50;
-    border: 1px solid #1a2a3a;
+    border-radius: 8px;
 }
 
 .result-item {
     background: #fff;
     padding: 10px;
     text-align: center;
-    border: 1px solid #aaa;
+    border-radius: 6px;
 }
 
 .result-label {
@@ -231,6 +259,7 @@ label {
     max-height: 500px;
     border: 1px solid #aaa;
     background: #fff;
+    border-radius: 6px;
 }
 
 table {
@@ -288,8 +317,9 @@ tr:hover {
     margin: 15% auto;
     padding: 20px;
     border: 2px solid #2c3e50;
-    width: 350px;
+    width: 380px;
     box-shadow: 5px 5px 15px rgba(0,0,0,0.3);
+    border-radius: 8px;
 }
 
 .modal-content h3 {
@@ -303,6 +333,7 @@ tr:hover {
     margin: 8px 0;
     border: 1px solid #aaa;
     font-size: 14px;
+    border-radius: 4px;
 }
 
 .modal-buttons {
@@ -317,6 +348,7 @@ tr:hover {
     border: none;
     cursor: pointer;
     font-size: 14px;
+    border-radius: 4px;
 }
 
 .btn-save {
@@ -346,13 +378,34 @@ tr:hover {
     background: #a33;
 }
 
-.rate-info {
-    font-size: 11px;
-    color: #2c6e2c;
-    margin-top: 4px;
-    display: none;
+.btn-full-close {
+    background: #d4a017;
+    color: white;
+    margin-top: 10px;
+    width: 100%;
+    padding: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 4px;
 }
 
-.rate-info.show {
-    display: block;
+.btn-full-close:hover {
+    background: #b8860b;
+}
+
+.full-close-info {
+    font-size: 12px;
+    color: #666;
+    margin-top: 8px;
+    padding: 5px;
+    background: #f0f0f0;
+    border-radius: 4px;
+    text-align: center;
+}
+
+@media (max-width: 700px) {
+    .trench-row-edit {
+        grid-template-columns: 1fr;
+    }
 }
