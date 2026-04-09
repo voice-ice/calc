@@ -177,8 +177,7 @@ function renderTrenchControls() {
             <div class="trench-row-edit">
                 <label>${monthName}:</label>
                 <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0">
-                <div class="trench-percent">${percentValue}% от кредита</div>
-            </div>
+в            </div>
         `;
     });
     container.innerHTML = html;
