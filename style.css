@@ -160,6 +160,29 @@ label {
     font-size: 12px;
 }
 
+.term-wrapper {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.term-wrapper input {
+    flex: 1;
+    padding: 8px 12px 8px 8px;
+    border: 1px solid #aaa;
+    background: white;
+    font-size: 14px;
+}
+
+.term-wrapper select {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid #aaa;
+    background: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
 .error-border {
     border-color: #c44 !important;
     background: #fff0f0 !important;

@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
     <title>Ипотечный калькулятор</title>
- 
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="calculator">
-    <h1>ИПОТЕЧНЫЙ КАЛЬКУЛЯТОР</h1>
+    <h1>ИПОТЕЧНЫЙ КАЛЬКУЛЯТОР NOVA CONSULTING</h1>
 
     <div class="mortgage-type">
         <div class="type-switch">
@@ -55,9 +54,12 @@
 
         <div class="input-group">
             <label>Срок кредита</label>
-            <div class="input-wrapper">
-                <input type="number" id="loanTerm" value="30" min="1" max="30" step="1">
-                <span>лет</span>
+            <div class="term-wrapper">
+                <input type="number" id="termValue" value="30" min="1" step="1">
+                <select id="termUnit">
+                    <option value="years" selected>лет</option>
+                    <option value="months">месяцев</option>
+                </select>
             </div>
         </div>
     </div>
@@ -85,7 +87,7 @@
         </div>
     </div>
 
-    <h2>График платежей </h2>
+    <h2>График платежей (клик по строке для досрочного погашения)</h2>
     <div class="schedule-container">
         <table id="paymentTable">
             <thead>
@@ -100,7 +102,7 @@
                 </tr>
             </thead>
             <tbody id="scheduleBody">
-                <tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td></tr>
+                <tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td</ea>
             </tbody>
         </table>
     </div>
@@ -125,7 +127,6 @@
 </div>
 
 <script src="main.js">
-
 </script>
 
 </body>
