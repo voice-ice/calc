@@ -31,56 +31,24 @@ let trenches = [
     { month: 12, share: 0.249 }   
 ];
 
-let updating = false;
-
 function updatePrices() {
-    if (updating) return;
-    updating = true;
-    
     let basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
     let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
     let discountRub = parseFloat(document.getElementById('discountRub').value) || 0;
     
-    let discountedPrice;
-    let newDiscountPercent;
-    let newDiscountRub;
+    // Стоимость со скидкой = Базовая стоимость - процентная скидка - рублевая скидка
+    let discountFromPercent = basePrice * (discountPercent / 100);
+    let discountedPrice = Math.max(0, basePrice - discountFromPercent - discountRub);
     
-    let percentChanged = document.getElementById('discountPercent').__changed;
-    let rubChanged = document.getElementById('discountRub').__changed;
-    
-    if (rubChanged || (discountRub > 0 && !percentChanged)) {
-        discountedPrice = Math.max(0, basePrice - discountRub);
-        newDiscountRub = discountRub;
-        if (basePrice > 0) {
-            newDiscountPercent = (discountRub / basePrice) * 100;
-        } else {
-            newDiscountPercent = 0;
-        }
-    } else {
-        discountedPrice = basePrice * (1 - discountPercent / 100);
-        newDiscountPercent = discountPercent;
-        newDiscountRub = basePrice * (discountPercent / 100);
-    }
-    
-    discountedPrice = Math.max(0, discountedPrice);
-    newDiscountRub = Math.min(newDiscountRub, basePrice);
-    
+    // ДВОУ = 3% от стоимости со скидкой
     let dvou = discountedPrice * DVOU_PERCENT / 100;
+    
+    // Стоимость лота в ДДУ = Стоимость со скидкой - ДВОУ
     let propertyPrice = discountedPrice - dvou;
     
     document.getElementById('discountedPrice').value = Math.round(discountedPrice);
     document.getElementById('dvou').value = Math.round(dvou);
-    document.getElementById('propertyPrice').value = Math.round(propertyPrice);
-    
-    if (!percentChanged) {
-        document.getElementById('discountPercent').value = newDiscountPercent.toFixed(1);
-    }
-    if (!rubChanged) {
-        document.getElementById('discountRub').value = Math.round(newDiscountRub);
-    }
-    
-    document.getElementById('discountPercent').__changed = false;
-    document.getElementById('discountRub').__changed = false;
+    document.getElementById('propertyPrice').value = Math.round(Math.max(0, propertyPrice));
     
     setMinDownPayment();
     
@@ -89,8 +57,6 @@ function updatePrices() {
     }
     calculateMortgage();
     saveCurrentValues();
-    
-    updating = false;
 }
 
 function updateInterestRateByDownPayment() {
@@ -673,23 +639,9 @@ window.onclick = function(event) {
     }
 }
 
-document.getElementById('basePrice').addEventListener('input', () => {
-    document.getElementById('discountPercent').__changed = false;
-    document.getElementById('discountRub').__changed = false;
-    updatePrices();
-});
-
-document.getElementById('discountPercent').addEventListener('input', () => {
-    document.getElementById('discountPercent').__changed = true;
-    document.getElementById('discountRub').__changed = false;
-    updatePrices();
-});
-
-document.getElementById('discountRub').addEventListener('input', () => {
-    document.getElementById('discountRub').__changed = true;
-    document.getElementById('discountPercent').__changed = false;
-    updatePrices();
-});
+document.getElementById('basePrice').addEventListener('input', updatePrices);
+document.getElementById('discountPercent').addEventListener('input', updatePrices);
+document.getElementById('discountRub').addEventListener('input', updatePrices);
 
 document.getElementById('basePrice').addEventListener('click', function() { this.select(); });
 document.getElementById('discountPercent').addEventListener('click', function() { this.select(); });
