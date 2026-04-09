@@ -177,7 +177,7 @@ function renderTrenchControls() {
             <div class="trench-row-edit">
                 <label>${monthName}:</label>
                 <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0">
-в            </div>
+          </div>
         `;
     });
     container.innerHTML = html;
