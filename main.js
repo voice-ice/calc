@@ -3,6 +3,9 @@ let currentMortgageType = 'annuity';
 let currentEditMonth = null;
 let currentRemainingDebtForModal = 0;
 const MIN_DOWN_PAYMENT_PERCENT = 20.1;
+const DISCOUNT_RATE = 19.7;
+const STANDARD_RATE = 20.7;
+const DISCOUNT_THRESHOLD = 50.1;
 
 let annuityValues = {
     propertyPrice: '',
@@ -27,6 +30,35 @@ let trenches = [
     { month: 12, share: 0.249 }   
 ];
 
+function updateInterestRateByDownPayment() {
+    let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
+    let downPayment = Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0);
+    let interestRateInput = document.getElementById('interestRate');
+    let rateInfo = document.getElementById('rateInfo');
+    
+    if (propertyPrice > 0) {
+        let downPaymentPercent = (downPayment / propertyPrice) * 100;
+        
+        if (downPaymentPercent > DISCOUNT_THRESHOLD) {
+            if (parseFloat(interestRateInput.value) !== DISCOUNT_RATE) {
+                interestRateInput.value = DISCOUNT_RATE;
+                if (rateInfo) rateInfo.classList.add('show');
+            }
+        } else {
+            if (parseFloat(interestRateInput.value) === DISCOUNT_RATE) {
+                interestRateInput.value = STANDARD_RATE;
+                if (rateInfo) rateInfo.classList.remove('show');
+            } else if (parseFloat(interestRateInput.value) !== STANDARD_RATE && parseFloat(interestRateInput.value) !== DISCOUNT_RATE) {
+                if (rateInfo) rateInfo.classList.remove('show');
+            } else {
+                if (rateInfo) rateInfo.classList.remove('show');
+            }
+        }
+    } else {
+        if (rateInfo) rateInfo.classList.remove('show');
+    }
+}
+
 function saveCurrentValues() {
     let propertyPrice = document.getElementById('propertyPrice').value;
     let downPayment = document.getElementById('downPayment').value;
@@ -49,6 +81,8 @@ function loadValuesForCurrentType() {
     document.getElementById('interestRate').value = values.interestRate;
     document.getElementById('termValue').value = values.termValue;
     document.getElementById('termUnit').value = values.termUnit;
+    
+    updateInterestRateByDownPayment();
 }
 
 function setMinDownPayment() {
@@ -86,7 +120,7 @@ function setFullCloseAmount() {
         fullCloseInfo.style.color = '#d4a017';
         fullCloseInfo.style.fontWeight = 'bold';
     } else {
-        fullCloseInfo.innerHTML = 'Нет данных о remainingDebt';
+        fullCloseInfo.innerHTML = 'Нет данных об остатке долга';
         fullCloseInfo.style.color = '#c44';
     }
 }
@@ -148,9 +182,6 @@ function deleteEarlyPayment() {
     calculateMortgage();
 }
 
-function updateTrenchSharesFromDownPayment() {
-}
-
 function renderTrenchControls() {
     const container = document.getElementById('trenchControls');
     let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
@@ -177,7 +208,8 @@ function renderTrenchControls() {
             <div class="trench-row-edit">
                 <label>${monthName}:</label>
                 <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0">
-          </div>
+                <div class="trench-percent">${percentValue}% от кредита</div>
+            </div>
         `;
     });
     container.innerHTML = html;
@@ -289,18 +321,20 @@ function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
         };
 
         let earlyPaymentsThisMonth = earlyPaymentsMap.get(currentMonth) || [];
-        let wasClosedThisMonth = false;
+        let isClosed = false;
         
         for (let ep of earlyPaymentsThisMonth) {
             let earlyAmount = Math.min(ep.amount, remainingDebt);
             if (earlyAmount > 0) {
                 remainingDebt -= earlyAmount;
                 scheduleEntry.earlyPayment += earlyAmount;
+                
                 if (remainingDebt <= 0.01) {
-                    wasClosedThisMonth = true;
+                    isClosed = true;
                     scheduleEntry.remainingDebt = 0;
                     break;
                 }
+                
                 if (ep.type === 'payment') {
                     let remMonths = Math.max(1, monthsTotal - currentMonth);
                     if (remainingDebt > 0 && monthlyRate > 0) {
@@ -318,7 +352,7 @@ function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
         schedule.push(scheduleEntry);
         currentMonth++;
         
-        if (remainingDebt <= 0.01 || wasClosedThisMonth) {
+        if (remainingDebt <= 0.01 || isClosed) {
             break;
         }
     }
@@ -392,11 +426,20 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
         };
 
         let earlyPaymentsThisMonth = earlyPaymentsMap.get(monthCounter) || [];
+        let isClosed = false;
+        
         for (let ep of earlyPaymentsThisMonth) {
             let earlyAmount = Math.min(ep.amount, activeDebt);
             if (earlyAmount > 0) {
                 activeDebt -= earlyAmount;
                 scheduleEntry.earlyPayment += earlyAmount;
+                
+                if (activeDebt <= 0.01) {
+                    isClosed = true;
+                    scheduleEntry.remainingDebt = 0;
+                    break;
+                }
+                
                 if (ep.type === 'payment') {
                     let remMonths = Math.max(1, monthsTotal - monthCounter);
                     if (activeDebt > 0 && monthlyRate > 0) {
@@ -415,7 +458,7 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
         
         monthCounter++;
         
-        if (activeDebt <= 0.01) break;
+        if (activeDebt <= 0.01 || isClosed) break;
     }
 
     displayResults(schedule, totalInterest, totalPayment, downPayment);
@@ -448,7 +491,7 @@ function displayResults(schedule, totalInterest, totalPayment, downPayment) {
 function renderSchedule(schedule) {
     const tbody = document.getElementById('scheduleBody');
     if (schedule.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td</ea>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td></tr>';
         return;
     }
 
@@ -528,6 +571,7 @@ window.onclick = function(event) {
 document.getElementById('propertyPrice').addEventListener('input', () => {
     setMinDownPayment();
     validateAndFixDownPayment();
+    updateInterestRateByDownPayment();
     if (currentMortgageType === 'trench') {
         renderTrenchControls();
     }
@@ -537,6 +581,7 @@ document.getElementById('propertyPrice').addEventListener('input', () => {
 
 document.getElementById('downPayment').addEventListener('input', () => {
     validateAndFixDownPayment();
+    updateInterestRateByDownPayment();
     if (currentMortgageType === 'trench') {
         renderTrenchControls();
     }
@@ -551,6 +596,7 @@ document.getElementById('downPayment').addEventListener('blur', function() {
     
     if (currentValue < minDownPayment && propertyPrice > 0) {
         this.value = Math.round(minDownPayment);
+        updateInterestRateByDownPayment();
         if (currentMortgageType === 'trench') {
             renderTrenchControls();
         }
@@ -563,10 +609,12 @@ document.getElementById('interestRate').addEventListener('input', () => {
     calculateMortgage();
     saveCurrentValues();
 });
+
 document.getElementById('termValue').addEventListener('input', () => {
     calculateMortgage();
     saveCurrentValues();
 });
+
 document.getElementById('termUnit').addEventListener('change', () => {
     calculateMortgage();
     saveCurrentValues();

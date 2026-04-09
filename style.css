@@ -345,3 +345,14 @@ tr:hover {
 .btn-delete:hover {
     background: #a33;
 }
+
+.rate-info {
+    font-size: 11px;
+    color: #2c6e2c;
+    margin-top: 4px;
+    display: none;
+}
+
+.rate-info.show {
+    display: block;
+}
