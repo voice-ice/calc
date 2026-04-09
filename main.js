@@ -35,9 +35,14 @@ function updatePrices() {
     let basePrice = parseFloat(document.getElementById('basePrice').value) || 0;
     let discountPercent = parseFloat(document.getElementById('discountPercent').value) || 0;
     
+    // Стоимость со скидкой
     let discountedPrice = basePrice * (1 - discountPercent / 100);
+    
+    // ДВОУ = 3% от стоимости со скидкой
     let dvou = discountedPrice * DVOU_PERCENT / 100;
-    let propertyPrice = discountedPrice; 
+    
+    // Стоимость лота в ДДУ = Стоимость со скидкой - ДВОУ
+    let propertyPrice = discountedPrice - dvou;
     
     document.getElementById('discountedPrice').value = Math.round(discountedPrice);
     document.getElementById('dvou').value = Math.round(dvou);
@@ -627,16 +632,11 @@ window.onclick = function(event) {
     }
 }
 
-
 document.getElementById('basePrice').addEventListener('input', updatePrices);
 document.getElementById('discountPercent').addEventListener('input', updatePrices);
 
-document.getElementById('basePrice').addEventListener('click', function() {
-    this.select();
-});
-document.getElementById('discountPercent').addEventListener('click', function() {
-    this.select();
-});
+document.getElementById('basePrice').addEventListener('click', function() { this.select(); });
+document.getElementById('discountPercent').addEventListener('click', function() { this.select(); });
 
 document.getElementById('propertyPrice').addEventListener('input', () => {
     setMinDownPayment();
@@ -659,9 +659,7 @@ document.getElementById('downPayment').addEventListener('input', () => {
     saveCurrentValues();
 });
 
-document.getElementById('downPayment').addEventListener('click', function() {
-    this.select();
-});
+document.getElementById('downPayment').addEventListener('click', function() { this.select(); });
 
 document.getElementById('downPayment').addEventListener('blur', function() {
     let propertyPrice = getCurrentPropertyPrice();
