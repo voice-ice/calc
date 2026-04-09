@@ -289,11 +289,18 @@ function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
         };
 
         let earlyPaymentsThisMonth = earlyPaymentsMap.get(currentMonth) || [];
+        let wasClosedThisMonth = false;
+        
         for (let ep of earlyPaymentsThisMonth) {
             let earlyAmount = Math.min(ep.amount, remainingDebt);
             if (earlyAmount > 0) {
                 remainingDebt -= earlyAmount;
                 scheduleEntry.earlyPayment += earlyAmount;
+                if (remainingDebt <= 0.01) {
+                    wasClosedThisMonth = true;
+                    scheduleEntry.remainingDebt = 0;
+                    break;
+                }
                 if (ep.type === 'payment') {
                     let remMonths = Math.max(1, monthsTotal - currentMonth);
                     if (remainingDebt > 0 && monthlyRate > 0) {
@@ -304,12 +311,16 @@ function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
                 }
             }
         }
+        
         scheduleEntry.remainingDebt = Math.max(0, remainingDebt);
         totalInterest += interestPayment;
         totalPayment += monthlyPayment + scheduleEntry.earlyPayment;
         schedule.push(scheduleEntry);
         currentMonth++;
-        if (remainingDebt <= 0.01) break;
+        
+        if (remainingDebt <= 0.01 || wasClosedThisMonth) {
+            break;
+        }
     }
 
     displayResults(schedule, totalInterest, totalPayment, downPayment);
