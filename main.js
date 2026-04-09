@@ -1,8 +1,8 @@
 let earlyPayments = [];
 let currentMortgageType = 'annuity';
 let currentEditMonth = null;
+let currentRemainingDebtForModal = 0;
 const MIN_DOWN_PAYMENT_PERCENT = 20.1;
-
 
 let annuityValues = {
     propertyPrice: '',
@@ -19,7 +19,6 @@ let trenchValues = {
     termValue: 30,
     termUnit: 'years'
 };
-
 
 let trenches = [
     { month: 0, share: 0.253 },   
@@ -77,12 +76,33 @@ function getTotalMonths() {
     }
 }
 
+function setFullCloseAmount() {
+    let earlyAmountInput = document.getElementById('earlyAmount');
+    let fullCloseInfo = document.getElementById('fullCloseInfo');
+    
+    if (currentRemainingDebtForModal > 0) {
+        earlyAmountInput.value = Math.round(currentRemainingDebtForModal);
+        fullCloseInfo.innerHTML = `Сумма для полного закрытия: ${formatMoney(currentRemainingDebtForModal)}`;
+        fullCloseInfo.style.color = '#d4a017';
+        fullCloseInfo.style.fontWeight = 'bold';
+    } else {
+        fullCloseInfo.innerHTML = 'Нет данных о remainingDebt';
+        fullCloseInfo.style.color = '#c44';
+    }
+}
+
 function openModal(month, currentDebt) {
     currentEditMonth = month;
+    currentRemainingDebtForModal = currentDebt;
     let existing = earlyPayments.find(ep => ep.month === month);
     document.getElementById('modalTitle').innerHTML = `Досрочное погашение - месяц ${month}`;
     document.getElementById('earlyAmount').value = existing ? existing.amount : Math.min(100000, currentDebt);
     document.getElementById('earlyType').value = existing ? existing.type : 'term';
+    
+    let fullCloseInfo = document.getElementById('fullCloseInfo');
+    fullCloseInfo.innerHTML = `Остаток долга: ${formatMoney(currentDebt)}`;
+    fullCloseInfo.style.color = '#666';
+    fullCloseInfo.style.fontWeight = 'normal';
     
     let deleteBtn = document.getElementById('deleteBtn');
     if (existing) {
@@ -97,6 +117,7 @@ function openModal(month, currentDebt) {
 function closeModal() {
     document.getElementById('earlyModal').style.display = 'none';
     currentEditMonth = null;
+    currentRemainingDebtForModal = 0;
 }
 
 function saveEarlyPayment() {
@@ -156,6 +177,7 @@ function renderTrenchControls() {
             <div class="trench-row-edit">
                 <label>${monthName}:</label>
                 <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0">
+                <div class="trench-percent">${percentValue}% от кредита</div>
             </div>
         `;
     });

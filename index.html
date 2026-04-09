@@ -118,6 +118,8 @@
             <option value="term">Уменьшить срок</option>
             <option value="payment">Уменьшить платёж</option>
         </select>
+        <button class="btn-full-close" id="fullCloseBtn" onclick="setFullCloseAmount()">Полное закрытие кредита</button>
+        <div class="full-close-info" id="fullCloseInfo"></div>
         <div class="modal-buttons">
             <button class="btn-save" onclick="saveEarlyPayment()">Сохранить</button>
             <button class="btn-delete" id="deleteBtn" onclick="deleteEarlyPayment()" style="display:none;">Удалить</button>
@@ -127,6 +129,7 @@
 </div>
 
 <script src="main.js">
+
 </script>
 
 </body>
