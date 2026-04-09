@@ -30,6 +30,7 @@ let trenches = [
     { month: 12, share: 0.249 }   
 ];
 
+// Функция обновления процентной ставки в зависимости от первоначального взноса
 function updateInterestRateByDownPayment() {
     let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
     let downPayment = Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0);
@@ -48,8 +49,6 @@ function updateInterestRateByDownPayment() {
             if (parseFloat(interestRateInput.value) === DISCOUNT_RATE) {
                 interestRateInput.value = STANDARD_RATE;
                 if (rateInfo) rateInfo.classList.remove('show');
-            } else if (parseFloat(interestRateInput.value) !== STANDARD_RATE && parseFloat(interestRateInput.value) !== DISCOUNT_RATE) {
-                if (rateInfo) rateInfo.classList.remove('show');
             } else {
                 if (rateInfo) rateInfo.classList.remove('show');
             }
@@ -59,6 +58,7 @@ function updateInterestRateByDownPayment() {
     }
 }
 
+// Сохранение текущих значений для активного типа ипотеки
 function saveCurrentValues() {
     let propertyPrice = document.getElementById('propertyPrice').value;
     let downPayment = document.getElementById('downPayment').value;
@@ -73,6 +73,7 @@ function saveCurrentValues() {
     }
 }
 
+// Загрузка значений для текущего типа ипотеки
 function loadValuesForCurrentType() {
     let values = currentMortgageType === 'annuity' ? annuityValues : trenchValues;
     
@@ -85,6 +86,7 @@ function loadValuesForCurrentType() {
     updateInterestRateByDownPayment();
 }
 
+// Установка минимального первоначального взноса
 function setMinDownPayment() {
     let propertyPrice = parseFloat(document.getElementById('propertyPrice').value) || 0;
     let downPaymentInput = document.getElementById('downPayment');
@@ -99,6 +101,7 @@ function setMinDownPayment() {
     }
 }
 
+// Получение общего количества месяцев кредита
 function getTotalMonths() {
     let termValue = parseFloat(document.getElementById('termValue').value) || 1;
     let termUnit = document.getElementById('termUnit').value;
@@ -110,6 +113,7 @@ function getTotalMonths() {
     }
 }
 
+// Установка суммы для полного закрытия кредита
 function setFullCloseAmount() {
     let earlyAmountInput = document.getElementById('earlyAmount');
     let fullCloseInfo = document.getElementById('fullCloseInfo');
@@ -125,6 +129,7 @@ function setFullCloseAmount() {
     }
 }
 
+// Открытие модального окна для досрочного погашения
 function openModal(month, currentDebt) {
     currentEditMonth = month;
     currentRemainingDebtForModal = currentDebt;
@@ -148,12 +153,14 @@ function openModal(month, currentDebt) {
     document.getElementById('earlyModal').style.display = 'block';
 }
 
+// Закрытие модального окна
 function closeModal() {
     document.getElementById('earlyModal').style.display = 'none';
     currentEditMonth = null;
     currentRemainingDebtForModal = 0;
 }
 
+// Сохранение досрочного погашения
 function saveEarlyPayment() {
     let amount = parseFloat(document.getElementById('earlyAmount').value);
     let type = document.getElementById('earlyType').value;
@@ -176,16 +183,21 @@ function saveEarlyPayment() {
     calculateMortgage();
 }
 
+// Удаление досрочного погашения
 function deleteEarlyPayment() {
     earlyPayments = earlyPayments.filter(ep => ep.month !== currentEditMonth);
     closeModal();
     calculateMortgage();
 }
 
+// Отрисовка контролов траншей
 function renderTrenchControls() {
     const container = document.getElementById('trenchControls');
     let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
     let downPayment = Math.min(propertyPrice, Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0));
+    let annualRate = Math.max(0.01, parseFloat(document.getElementById('interestRate').value) || 0);
+    let monthsTotal = getTotalMonths();
+    let monthlyRate = annualRate / 100 / 12;
     
     let minDownPayment = propertyPrice * MIN_DOWN_PAYMENT_PERCENT / 100;
     if (downPayment < minDownPayment) {
@@ -194,30 +206,65 @@ function renderTrenchControls() {
     
     let loanAmount = propertyPrice - downPayment;
     
+    // Рассчитываем платежи после каждого транша
+    let trenchPayments = [];
+    let accumulatedDebt = 0;
+    
+    for (let i = 0; i < trenches.length; i++) {
+        let trench = trenches[i];
+        let amount = loanAmount * trench.share;
+        accumulatedDebt += amount;
+        
+        // Оставшиеся месяцы после выдачи этого транша
+        let remainingMonths = Math.max(1, monthsTotal - trench.month);
+        let monthlyPayment = 0;
+        
+        if (accumulatedDebt > 0) {
+            if (monthlyRate === 0) {
+                monthlyPayment = accumulatedDebt / remainingMonths;
+            } else {
+                monthlyPayment = accumulatedDebt * monthlyRate * Math.pow(1 + monthlyRate, remainingMonths) / (Math.pow(1 + monthlyRate, remainingMonths) - 1);
+            }
+        }
+        
+        trenchPayments.push({
+            month: trench.month,
+            payment: monthlyPayment,
+            debt: accumulatedDebt
+        });
+    }
+    
     let html = '';
     trenches.forEach((trench, idx) => {
         let amount = loanAmount * trench.share;
         let monthName = '';
         let percentValue = (trench.share * 100).toFixed(1);
+        
         if (trench.month === 0) monthName = 'Транш 1 (в день сделки)';
         else if (trench.month === 4) monthName = 'Транш 2 (через 4 мес.)';
         else if (trench.month === 8) monthName = 'Транш 3 (через 8 мес.)';
         else monthName = 'Транш 4 (через 12 мес.)';
         
+        let paymentValue = trenchPayments[idx] && trenchPayments[idx].payment > 0 ? formatMoney(trenchPayments[idx].payment) : '0 ₽';
+        
         html += `
-            <div class="trench-row-edit">
+            <div class="trench-row-edit" style="grid-template-columns: 140px 1fr 100px 1fr 80px;">
                 <label>${monthName}:</label>
-                <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0">
+                <input type="text" value="${formatMoney(amount)}" readonly style="background:#f0f0f0;">
+                <input type="text" value="${paymentValue}" readonly style="background:#e8f0fe; font-weight:bold; color:#2c6e2c;">
+                <div style="font-size: 11px; color:#2c6e2c;">платёж</div>
             </div>
         `;
     });
     container.innerHTML = html;
 }
 
+// Форматирование денег
 function formatMoney(amount) {
     return Math.round(amount).toLocaleString('ru-RU') + ' ₽';
 }
 
+// Валидация и фикс первоначального взноса
 function validateAndFixDownPayment() {
     let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
     let downPaymentInput = document.getElementById('downPayment');
@@ -235,6 +282,7 @@ function validateAndFixDownPayment() {
     return downPayment;
 }
 
+// Расчет ежемесячного платежа
 function calculateMonthlyPayment(debt, rate, remainingMonths) {
     if (debt <= 0) return 0;
     if (rate === 0) return debt / remainingMonths;
@@ -242,6 +290,7 @@ function calculateMonthlyPayment(debt, rate, remainingMonths) {
     return debt * rate * Math.pow(1 + rate, remainingMonths) / (Math.pow(1 + rate, remainingMonths) - 1);
 }
 
+// Основной расчет ипотеки
 function calculateMortgage() {
     let propertyPrice = Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0);
     let downPaymentRaw = Math.min(propertyPrice, Math.max(0, parseFloat(document.getElementById('downPayment').value) || 0));
@@ -278,6 +327,7 @@ function calculateMortgage() {
     }
 }
 
+// Расчет аннуитетной ипотеки
 function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
     let remainingDebt = loanAmount;
     let schedule = [];
@@ -360,6 +410,7 @@ function calculateAnnuity(loanAmount, monthlyRate, monthsTotal, downPayment) {
     renderSchedule(schedule);
 }
 
+// Расчет траншевой ипотеки
 function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment) {
     let activeDebt = 0;
     let schedule = [];
@@ -464,6 +515,7 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
     renderSchedule(schedule);
 }
 
+// Отображение результатов
 function displayResults(schedule, totalInterest, totalPayment, downPayment) {
     if (schedule.length === 0) {
         document.getElementById('monthlyPayment').textContent = '0 ₽';
@@ -487,10 +539,11 @@ function displayResults(schedule, totalInterest, totalPayment, downPayment) {
     document.getElementById('actualTerm').textContent = termText;
 }
 
+// Отрисовка графика платежей
 function renderSchedule(schedule) {
     const tbody = document.getElementById('scheduleBody');
     if (schedule.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td</ea>';
         return;
     }
 
@@ -527,18 +580,21 @@ function renderSchedule(schedule) {
     tbody.innerHTML = html;
 }
 
+// Склонение слова "год"
 function getYearWord(years) {
     if (years % 10 === 1 && years % 100 !== 11) return 'год';
     if ([2,3,4].includes(years % 10) && ![12,13,14].includes(years % 100)) return 'года';
     return 'лет';
 }
 
+// Склонение слова "месяц"
 function getMonthWord(months) {
     if (months % 10 === 1 && months % 100 !== 11) return 'месяц';
     if ([2,3,4].includes(months % 10) && ![12,13,14].includes(months % 100)) return 'месяца';
     return 'месяцев';
 }
 
+// Обработчик смены типа ипотеки
 function onMortgageTypeChange() {
     saveCurrentValues();
     
@@ -560,6 +616,7 @@ function onMortgageTypeChange() {
     calculateMortgage();
 }
 
+// Закрытие модального окна при клике вне его
 window.onclick = function(event) {
     let modal = document.getElementById('earlyModal');
     if (event.target === modal) {
@@ -567,6 +624,7 @@ window.onclick = function(event) {
     }
 }
 
+// Обработчики событий
 document.getElementById('propertyPrice').addEventListener('input', () => {
     setMinDownPayment();
     validateAndFixDownPayment();
@@ -605,16 +663,25 @@ document.getElementById('downPayment').addEventListener('blur', function() {
 });
 
 document.getElementById('interestRate').addEventListener('input', () => {
+    if (currentMortgageType === 'trench') {
+        renderTrenchControls();
+    }
     calculateMortgage();
     saveCurrentValues();
 });
 
 document.getElementById('termValue').addEventListener('input', () => {
+    if (currentMortgageType === 'trench') {
+        renderTrenchControls();
+    }
     calculateMortgage();
     saveCurrentValues();
 });
 
 document.getElementById('termUnit').addEventListener('change', () => {
+    if (currentMortgageType === 'trench') {
+        renderTrenchControls();
+    }
     calculateMortgage();
     saveCurrentValues();
 });
@@ -622,6 +689,7 @@ document.getElementById('termUnit').addEventListener('change', () => {
 let radios = document.querySelectorAll('input[name="mortgageType"]');
 radios.forEach(radio => radio.addEventListener('change', onMortgageTypeChange));
 
+// Инициализация при загрузке страницы
 window.onload = function() {
     currentMortgageType = 'annuity';
     document.querySelector('input[value="annuity"]').checked = true;
