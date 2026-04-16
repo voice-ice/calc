@@ -463,7 +463,6 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
     while (activeDebt > 0.01 && monthCounter <= maxMonths) {
         let trenchAdded = 0;
         
-        // Выдача траншей
         for (let trench of trenchSchedule) {
             if (trench.month > 0 && trench.month === monthCounter - 1 && trench.amount > 0) {
                 activeDebt += trench.amount;
@@ -517,7 +516,6 @@ function calculateTrench(totalLoanAmount, monthlyRate, monthsTotal, downPayment)
                     remainingMonths = Math.min(remainingMonths, monthsTotal * 2);
                     currentMonthlyPayment = fixedPayment;
                 }
-                // Уменьшение платежа
                 else if (ep.type === 'payment') {
                     let remMonths = Math.max(1, remainingMonths);
                     if (activeDebt > 0 && monthlyRate > 0) {
