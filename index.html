@@ -2,174 +2,96 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ипотечный калькулятор</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Ипотечный калькулятор | Нова Консалтинг × Темпо</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="calculator">
-    <h1>ИПОТЕЧНЫЙ КАЛЬКУЛЯТОР НОВА КОНСАЛТИНГ Х ТЕМПО</h1>
+    <h1>ИПОТЕЧНЫЙ КАЛЬКУЛЯТОР НОВА КОНСАЛТИНГ × ТЕМПО</h1>
+    <div class="content-padding">
+    
+        <div class="price-block">
+            <h3>
+                <label class="trench-option" id="trenchPriceOptionLabel" style="display: none;">
+                    <input type="checkbox" id="trenchPriceMarkup"> +2% к базовой
+                </label>
+            </h3>
+            <div class="price-inputs">
+                <div class="input-group"><label>Базовая стоимость</label><div class="input-wrapper"><input type="number" id="basePrice" value="" placeholder="Введите сумму" step="100000"><span>₽</span></div></div>
+                <div class="input-group"><label>Скидка (%)</label><div class="input-wrapper"><input type="number" id="discountPercent" value="" placeholder="0" step="0.1" min="0" max="100"><span>%</span></div></div>
+                <div class="input-group"><label>Оффер (₽)</label><div class="input-wrapper"><input type="number" id="discountRub" value="" placeholder="0" step="1000"><span>₽</span></div></div>
+                <div class="input-group"><label>Стоимость со скидкой</label><div class="input-wrapper"><input type="number" id="discountedPrice" readonly style="background:#f0f0f0"><span>₽</span></div></div>
+                <div class="input-group"><label>ДВОУ (3%)</label><div class="input-wrapper"><input type="number" id="dvou" readonly style="background:#e8f0fe; font-weight:bold;"><span>₽</span></div></div>
+                <div class="input-group"><label>Стоимость лота в ДДУ</label><div class="input-wrapper"><input type="number" id="propertyPrice" readonly style="background:#f0f0f0"><span>₽</span></div></div>
+            </div>
+            <div class="info-note" id="priceNote" style="margin-top: 10px;"></div>
+        </div>
 
-    <div class="price-block">
-        <h3>Расчет стоимости с учетом скидки</h3>
-        <div class="price-inputs">
-            <div class="input-group">
-                <label>Базовая стоимость лота</label>
-                <div class="input-wrapper">
-                    <input type="number" id="basePrice" value="0" min="0" step="100000">
-                    <span>₽</span>
-                </div>
+        <div class="mortgage-type">
+            <div class="type-switch">
+                <label><input type="radio" name="mortgageType" value="annuity" checked> Базовая ипотека</label>
+                <label><input type="radio" name="mortgageType" value="trench"> Траншевая ипотека</label>
+                <label><input type="radio" name="mortgageType" value="subsidized"> Субсидированная ипотека</label>
             </div>
-            <div class="input-group">
-                <label>Скидка (%)</label>
-                <div class="input-wrapper">
-                    <input type="number" id="discountPercent" value="0" min="0" max="100" step="0.1">
-                    <span>%</span>
-                </div>
+            <div class="trench-info" id="trenchInfo" style="display: none;">
+                <div class="trench-editor" id="trenchControls"></div>
             </div>
-            <div class="input-group">
-                <label>Оффер</label>
-                <div class="input-wrapper">
-                    <input type="number" id="discountRub" value="0" min="0" step="1000">
-                    <span>₽</span>
-                </div>
-            </div>
-            <div class="input-group">
-                <label>Стоимость со скидкой</label>
-                <div class="input-wrapper">
-                    <input type="number" id="discountedPrice" readonly style="background:#f0f0f0">
-                    <span>₽</span>
-                </div>
-            </div>
-            <div class="input-group">
-                <label>ДВОУ</label>
-                <div class="input-wrapper">
-                    <input type="number" id="dvou" readonly style="background:#e8f0fe; font-weight:bold; color:#2c6e2c;">
-                    <span>₽</span>
-                </div>
-            </div>
-            <div class="input-group">
-                <label>Стоимость лота в ДДУ</label>
-                <div class="input-wrapper">
-                    <input type="number" id="propertyPrice" readonly style="background:#f0f0f0">
-                    <span>₽</span>
+            <div class="subsidized-info" id="subsidizedInfo" style="display: none;">
+                <div class="subsidized-config">
+                    <div class="row-flex">
+                        <div class="input-group">
+                            <label>Период льготной ставки</label>
+                            <div class="input-wrapper">
+                                <select id="subsidyPeriodSelect">
+                                    <option value="12">12 месяцев (базовая льготная 15.2%)</option>
+                                    <option value="24">24 месяца (базовая льготная 17.2%)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Базовая ставка после льготного периода</label>
+                            <div class="input-wrapper"><input type="number" id="postSubsidyRate" value="20.7" step="0.1" min="0"><span>%</span></div>
+                        </div>
+                    </div>
+                    <div class="rate-badge" id="subsidyHint"> Льготный период: первые 12 месяцев по ставке 15.2% → с 13 месяца: 20.7%</div>
+                    <div class="rate-badge high-downpayment" id="downpaymentBonusHint" style="margin-top: 8px; display: none;">При взносе > 50.1% льготная ставка снижается на 1%</div>
                 </div>
             </div>
         </div>
+
+        <div class="main-inputs">
+            <div class="input-group" id="downPaymentGroup">
+                <label>Первоначальный взнос <span id="downPaymentHint" style="font-size: 0.65rem; color:#6b7c8f;"></span></label>
+                <div class="input-wrapper"><input type="number" id="downPayment" value="" placeholder="0" step="100000"><span>₽</span></div>
+            </div>
+            <div class="input-group" id="rateFieldGroup">
+                <label>Процентная ставка <span id="rateHintText">(базовая)</span></label>
+                <div class="input-wrapper"><input type="number" id="interestRate" value="20.7" step="0.1"><span>%</span></div>
+                <div class="rate-info" id="rateInfo">При взносе > 50.1% ставка снижена до 19.7% (для базовой)</div>
+            </div>
+            <div class="input-group"><label>Срок кредита</label><div class="term-wrapper"><input type="number" id="termValue" value="30" step="1"><select id="termUnit"><option value="years" selected>лет</option><option value="months">месяцев</option></select></div></div>
+        </div>
+
+        <h2>График платежей (клик по строке → досрочное погашение)</h2>
+        <div class="schedule-container"><table id="paymentTable"><thead><tr><th>Месяц</th><th>Платёж</th><th>Основной долг</th><th>Проценты</th><th>Остаток долга</th><th>Досрочно</th><th>Транш</th></tr></thead><tbody id="scheduleBody"><tr><td colspan="7" style="text-align:center;">Введите параметры</td</ea></tbody></table></div>
     </div>
-
-    <div class="mortgage-type">
-        <div class="type-switch">
-            <label>
-                <input type="radio" name="mortgageType" value="annuity" checked> Базовая ипотека
-            </label>
-            <label>
-                <input type="radio" name="mortgageType" value="trench"> Траншевая ипотека
-            </label>
-        </div>
-        <div class="trench-info" id="trenchInfo" style="display: none;">
-            <div class="trench-editor" id="trenchEditor">
-                <div id="trenchControls"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="main-inputs">
-        <div class="input-group">
-            <label>Первоначальный взнос (мин. 20.1% от стоимости в ДДУ)</label>
-            <div class="input-wrapper">
-                <input type="number" id="downPayment" value="0" placeholder="Введите сумму" min="0" step="100000">
-                <span>₽</span>
-            </div>
-        </div>
-
-        <div class="input-group">
-            <label>Процентная ставка</label>
-            <div class="input-wrapper">
-                <input type="number" id="interestRate" value="20.7" min="0.1" step="0.1">
-                <span>%</span>
-            </div>
-            <div class="rate-info" id="rateInfo">✓ При первоначальном взносе > 50.1% ставка снижена до 19.7%</div>
-        </div>
-
-        <div class="input-group">
-            <label>Срок кредита</label>
-            <div class="term-wrapper">
-                <input type="number" id="termValue" value="30" min="1" step="1">
-                <select id="termUnit">
-                    <option value="years" selected>лет</option>
-                    <option value="months">месяцев</option>
-                </select>
-            </div>
-        </div>
-    </div>
-
-    <div class="results">
-        <div class="result-item">
-            <div class="result-label">Сумма кредита</div>
-            <div class="result-value" id="loanAmount">0 ₽</div>
-        </div>
-        <div class="result-item">
-            <div class="result-label">Ежемесячный платёж</div>
-            <div class="result-value accent" id="monthlyPayment">0 ₽</div>
-        </div>
-        <div class="result-item">
-            <div class="result-label">Общая переплата</div>
-            <div class="result-value warning" id="totalOverpayment">0 ₽</div>
-        </div>
-        <div class="result-item">
-            <div class="result-label">Общая сумма выплат</div>
-            <div class="result-value" id="totalPayment">0 ₽</div>
-        </div>
-        <div class="result-item">
-            <div class="result-label">Фактический срок</div>
-            <div class="result-value" id="actualTerm">0 лет</div>
-        </div>
-    </div>
-
-    <h2>График платежей (клик по строке для досрочного погашения)</h2>
-    <div class="schedule-container">
-        <table id="paymentTable">
-            <thead>
-                <tr>
-                    <th>Месяц</th>
-                    <th>Платёж</th>
-                    <th>Основной долг</th>
-                    <th>Проценты</th>
-                    <th>Остаток долга</th>
-                    <th>Досрочно</th>
-                    <th>Транш</th>
-                </tr>
-            </thead>
-            <tbody id="scheduleBody">
-                <td><td colspan="7" style="text-align: center; padding: 30px;">Введите параметры для расчета</td</ea>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<div id="earlyModal" class="modal">
-    <div class="modal-content">
-        <h3 id="modalTitle">Досрочное погашение</h3>
-        <label>Сумма погашения (₽):</label>
-        <input type="number" id="earlyAmount" step="10000" value="100000">
-        <label>Тип погашения:</label>
-        <select id="earlyType">
-            <option value="term">Уменьшить срок</option>
-            <option value="payment">Уменьшить платёж</option>
-        </select>
-        <button class="btn-full-close" id="fullCloseBtn" onclick="setFullCloseAmount()">Полное закрытие кредита</button>
-        <div class="full-close-info" id="fullCloseInfo"></div>
-        <div class="modal-buttons">
-            <button class="btn-save" onclick="saveEarlyPayment()">Сохранить</button>
-            <button class="btn-delete" id="deleteBtn" onclick="deleteEarlyPayment()" style="display:none;">Удалить</button>
-            <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+    <div class="results-bottom">
+        <div class="results">
+            <div class="result-item"><div class="result-label">Сумма кредита</div><div class="result-value" id="loanAmount">0 ₽</div></div>
+            <div class="result-item"><div class="result-label">Ежемесячный платёж</div><div class="result-value accent" id="monthlyPayment">0 ₽</div></div>
+            <div class="result-item"><div class="result-label">Общая переплата</div><div class="result-value warning" id="totalOverpayment">0 ₽</div></div>
+            <div class="result-item"><div class="result-label">Общая сумма выплат</div><div class="result-value" id="totalPayment">0 ₽</div></div>
+            <div class="result-item"><div class="result-label">Фактический срок</div><div class="result-value" id="actualTerm">0 лет</div></div>
         </div>
     </div>
 </div>
 
-<script src="main.js"></script>
+<div id="earlyModal" class="modal"><div class="modal-content"><h3 id="modalTitle">Досрочное погашение</h3><label>Сумма (₽):</label><input type="number" id="earlyAmount" step="10000" value="100000"><label>Тип:</label><select id="earlyType"><option value="term">Уменьшить срок</option><option value="payment">Уменьшить платёж</option></select><button class="btn-full-close" id="fullCloseBtn">✅ Полное закрытие</button><div id="fullCloseInfo" class="full-close-info"></div><div class="modal-buttons"><button class="btn-save" onclick="saveEarlyPayment()">Сохранить</button><button class="btn-delete" id="deleteBtn" onclick="deleteEarlyPayment()" style="display:none;">Удалить</button><button class="btn-cancel" onclick="closeModal()">Отмена</button></div></div></div>
 
+<script src="main.js">
+
+</script>
 </body>
 </html>
