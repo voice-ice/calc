@@ -1008,7 +1008,7 @@ function calculateMortgage() {
 
 function renderSchedule(schedule) {
     let tbody = document.getElementById('scheduleBody');
-    if (!schedule.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Нет数据</td</ea>'; return; }
+    if (!schedule.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Нет</td</ea>'; return; }
     let html = '';
     for (let m of schedule) {
         let hasEp = earlyPayments.some(ep => ep.month === m.month);
