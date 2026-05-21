@@ -129,6 +129,34 @@ label {
     font-weight: 500;
 }
 
+.down-payment-percent {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.down-payment-percent input {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 12px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.85rem;
+}
+.down-payment-percent span {
+    font-size: 0.75rem;
+    color: #5b6e8c;
+}
+input[type="range"] {
+    flex: 2;
+    height: 4px;
+    border-radius: 5px;
+    background: #d1d9e6;
+}
+input[type="range"]:focus {
+    outline: none;
+}
+
 .mortgage-type {
     background: #f8fafc;
     border-radius: 20px;
@@ -217,7 +245,7 @@ label {
 
 .main-inputs {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.2rem;
     margin-bottom: 2rem;
 }

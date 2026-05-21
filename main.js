@@ -39,17 +39,58 @@ function getRawDiscountedPrice() {
     return Math.max(0, basePrice - (basePrice * discountPercent / 100) - discountRub);
 }
 
+function updatePercentRangeLimits() {
+    let minPercent = currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT;
+    let rangeInput = document.getElementById('downPaymentPercentRange');
+    rangeInput.min = minPercent;
+    rangeInput.max = 100;
+    let hintSpan = document.getElementById('downPaymentHint');
+}
+
+function applyPercentValue() {
+    let propertyPrice = getCurrentPropertyPrice();
+    if (propertyPrice <= 0) return;
+    let percentInput = document.getElementById('downPaymentPercent');
+    let rawValue = percentInput.value;
+    if (rawValue === '' || rawValue === null) return;
+    let percent = parseFloat(rawValue);
+    let minPercent = currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT;
+    if (isNaN(percent)) {
+        percent = minPercent;
+    }
+    percent = Math.min(100, Math.max(minPercent, percent));
+    let downAmount = Math.round(propertyPrice * percent / 100);
+    document.getElementById('downPayment').value = downAmount;
+    document.getElementById('downPaymentPercent').value = percent.toFixed(1);
+    document.getElementById('downPaymentPercentRange').value = percent;
+    updateAnnuityRateBasedOnDownPayment();
+    calculateMortgage();
+    saveCurrentValues();
+    if(currentMortgageType === 'subsidized') updateSubsidyHintAndBonus();
+    if(currentMortgageType === 'trench') renderTrenchControls();
+}
+
+// Обновление процентов из суммы взноса
+function updatePercentFromDownPayment() {
+    let propertyPrice = getCurrentPropertyPrice();
+    let downAmount = parseFloat(document.getElementById('downPayment').value) || 0;
+    let minPercent = currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT;
+    if (propertyPrice > 0) {
+        let percent = (downAmount / propertyPrice) * 100;
+        percent = Math.min(100, Math.max(minPercent, percent));
+        document.getElementById('downPaymentPercent').value = percent.toFixed(1);
+        document.getElementById('downPaymentPercentRange').value = percent;
+    }
+}
+
 function updateAnnuityRateBasedOnDownPayment() {
     if (currentMortgageType !== 'annuity') return;
-    
     let propertyPrice = getCurrentPropertyPrice();
     let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
     let rateInput = document.getElementById('interestRate');
     let rateInfo = document.getElementById('rateInfo');
-    
     if (propertyPrice > 0) {
         let downPercent = (downPayment / propertyPrice) * 100;
-        
         if (downPercent > DISCOUNT_THRESHOLD) {
             if (Math.abs(parseFloat(rateInput.value) - REDUCED_ANNUITY_RATE) > 0.01) {
                 rateInput.value = REDUCED_ANNUITY_RATE;
@@ -61,8 +102,6 @@ function updateAnnuityRateBasedOnDownPayment() {
                 rateInfo.classList.remove('show');
             }
         }
-    } else {
-        rateInfo.classList.remove('show');
     }
 }
 
@@ -70,31 +109,19 @@ function updatePrices() {
     let rawDiscounted = getRawDiscountedPrice();
     let useMarkup = (currentMortgageType === 'trench') && (document.getElementById('trenchPriceMarkup')?.checked === true);
     let priceBeforeDvou = rawDiscounted;
-    let noteText = "";
-    
     if (useMarkup && currentMortgageType === 'trench') {
         priceBeforeDvou = rawDiscounted * (1 + TRENCH_PRICE_MARKUP_PERCENT / 100);
-        noteText = `Для траншевой ипотеки применена наценка +${TRENCH_PRICE_MARKUP_PERCENT}% ${formatMoney(rawDiscounted)} → ${formatMoney(priceBeforeDvou)}`;
+        document.getElementById('priceNote').innerHTML = `Наценка +2%: ${formatMoney(rawDiscounted)} → ${formatMoney(priceBeforeDvou)}`;
+        document.getElementById('priceNote').style.display = 'block';
+    } else {
+        document.getElementById('priceNote').style.display = 'none';
     }
-    
     let dvou = priceBeforeDvou * DVOU_PERCENT / 100;
     let propertyPrice = priceBeforeDvou - dvou;
-    
     document.getElementById('discountedPrice').value = Math.round(rawDiscounted);
     document.getElementById('dvou').value = Math.round(dvou);
     document.getElementById('propertyPrice').value = Math.round(Math.max(0, propertyPrice));
-    
-    let noteDiv = document.getElementById('priceNote');
-    if (useMarkup && currentMortgageType === 'trench') {
-        noteDiv.innerHTML = noteText;
-        noteDiv.style.display = 'block';
-    } else {
-        noteDiv.innerHTML = '';
-        noteDiv.style.display = 'none';
-    }
-    
     autoAdjustDownPayment();
-    
     if (currentMortgageType === 'trench') renderTrenchControls();
     calculateMortgage();
     saveCurrentValues();
@@ -104,47 +131,26 @@ function autoAdjustDownPayment() {
     let propertyPrice = getCurrentPropertyPrice();
     let downInput = document.getElementById('downPayment');
     let currentDown = parseFloat(downInput.value) || 0;
-    let minPercent = getCurrentMinDownPercent();
+    let minPercent = currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT;
     let minDown = propertyPrice * minPercent / 100;
     
     if (propertyPrice <= 0) {
         downInput.value = 0;
-        let hintSpan = document.getElementById('downPaymentHint');
-        if (hintSpan) hintSpan.innerHTML = '';
+        updatePercentFromDownPayment();
         return;
     }
-    
     if (currentDown > propertyPrice) {
         downInput.value = Math.round(propertyPrice);
-    }
-    else if (currentDown < minDown) {
+    } else if (currentDown < minDown) {
+        downInput.value = Math.round(minDown);
+    } else if (currentDown === 0 && propertyPrice > 0) {
         downInput.value = Math.round(minDown);
     }
-    else if (currentDown === 0 && propertyPrice > 0) {
-        downInput.value = Math.round(minDown);
-    }
-    
-    let hintSpan = document.getElementById('downPaymentHint');
-    if (hintSpan) {
-        if (currentMortgageType === 'trench') {
-            hintSpan.innerHTML = `(мин. 40% = ${formatMoney(minDown)})`;
-        } else {
-            hintSpan.innerHTML = `(мин. 20.1% = ${formatMoney(minDown)})`;
-        }
-    }
-    
-    let newVal = parseFloat(downInput.value) || 0;
-    if (propertyPrice > 0 && newVal < minDown - 0.01) {
-        downInput.classList.add('error-border');
-    } else {
-        downInput.classList.remove('error-border');
-    }
-    
+    updatePercentFromDownPayment();
     updateAnnuityRateBasedOnDownPayment();
 }
 
 function getCurrentPropertyPrice() { return Math.max(0, parseFloat(document.getElementById('propertyPrice').value) || 0); }
-function getCurrentMinDownPercent() { return currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT; }
 function getTotalMonths() {
     let val = parseFloat(document.getElementById('termValue').value) || 1;
     let unit = document.getElementById('termUnit').value;
@@ -157,16 +163,11 @@ function saveCurrentValues() {
     let termVal = document.getElementById('termValue').value;
     let termUnit = document.getElementById('termUnit').value;
     if (currentMortgageType === 'subsidized') {
-        let subsidyMonths = parseInt(document.getElementById('subsidyPeriodSelect').value);
-        let postRate = parseFloat(document.getElementById('postSubsidyRate').value) || 0;
-        savedValues.subsidized = { propertyPrice: prop, downPayment: down, subsidyMonths, postSubsidyRate: postRate, termValue: termVal, termUnit };
+        savedValues.subsidized = { propertyPrice: prop, downPayment: down, subsidyMonths: parseInt(document.getElementById('subsidyPeriodSelect').value), postSubsidyRate: parseFloat(document.getElementById('postSubsidyRate').value) || 0, termValue: termVal, termUnit };
     } else if (currentMortgageType === 'annuity') {
-        let annRate = parseFloat(document.getElementById('interestRate').value) || 20.7;
-        savedValues.annuity = { propertyPrice: prop, downPayment: down, interestRate: annRate, termValue: termVal, termUnit };
+        savedValues.annuity = { propertyPrice: prop, downPayment: down, interestRate: parseFloat(document.getElementById('interestRate').value) || 20.7, termValue: termVal, termUnit };
     } else {
-        let trenchRate = parseFloat(document.getElementById('interestRate').value) || 20.7;
-        let useMarkup = document.getElementById('trenchPriceMarkup')?.checked === true;
-        savedValues.trench = { propertyPrice: prop, downPayment: down, interestRate: trenchRate, termValue: termVal, termUnit, usePriceMarkup: useMarkup };
+        savedValues.trench = { propertyPrice: prop, downPayment: down, interestRate: parseFloat(document.getElementById('interestRate').value) || 20.7, termValue: termVal, termUnit, usePriceMarkup: document.getElementById('trenchPriceMarkup')?.checked === true };
     }
 }
 
@@ -177,73 +178,57 @@ function loadValuesForCurrentType() {
     document.getElementById('downPayment').value = vals.downPayment;
     document.getElementById('termValue').value = vals.termValue;
     document.getElementById('termUnit').value = vals.termUnit;
+    updatePercentFromDownPayment();
+    updatePercentRangeLimits();
     if (currentMortgageType === 'subsidized') {
         document.getElementById('subsidyPeriodSelect').value = vals.subsidyMonths || 12;
         document.getElementById('postSubsidyRate').value = vals.postSubsidyRate || 20.7;
         updateSubsidyHintAndBonus();
         document.getElementById('interestRate').disabled = true;
-        document.getElementById('interestRate').style.background = '#f3f4f6';
         document.getElementById('rateHintText').innerText = '(для субсидированной)';
     } else if (currentMortgageType === 'annuity') {
         document.getElementById('interestRate').value = vals.interestRate;
         document.getElementById('interestRate').disabled = false;
-        document.getElementById('interestRate').style.background = '#fff';
         document.getElementById('rateHintText').innerText = '(базовая)';
         updateAnnuityRateBasedOnDownPayment();
     } else {
         document.getElementById('interestRate').value = vals.interestRate;
         document.getElementById('interestRate').disabled = false;
-        document.getElementById('interestRate').style.background = '#fff';
         document.getElementById('rateHintText').innerText = '(для траншевой)';
         let chk = document.getElementById('trenchPriceMarkup');
         if (chk) chk.checked = vals.usePriceMarkup === true;
     }
     if (currentMortgageType === 'trench') renderTrenchControls();
-    autoAdjustDownPayment();
     updatePrices();
 }
 
 function updateSubsidyHintAndBonus() {
     let months = parseInt(document.getElementById('subsidyPeriodSelect').value);
     let postRate = document.getElementById('postSubsidyRate').value;
-    let propertyPrice = getCurrentPropertyPrice();
-    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
-    let downPercent = propertyPrice > 0 ? (downPayment / propertyPrice) * 100 : 0;
+    let downPercent = parseFloat(document.getElementById('downPaymentPercent').value) || 0;
     let isHighDown = downPercent > DISCOUNT_THRESHOLD;
     let baseRate = getBaseSubsidizedRate(months);
     let effectiveRate = isHighDown ? baseRate - 1.0 : baseRate;
     let hint = document.getElementById('subsidyHint');
     if (months === 12) {
-        hint.innerHTML = isHighDown ? ` Льготный период: первые 12 месяцев по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 13 месяца: ${postRate}%` : `✨ Льготный период: первые 12 месяцев по ставке ${baseRate}% → с 13 месяца: ${postRate}%`;
+        hint.innerHTML = isHighDown ? `Льготный период: 12 мес. ${effectiveRate.toFixed(1)}% (снижена на 1%) → ${postRate}%` : `Льготный период: 12 мес. ${baseRate}% → ${postRate}%`;
     } else {
-        hint.innerHTML = isHighDown ? ` Льготный период: первые 24 месяца по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 25 месяца: ${postRate}%` : `✨ Льготный период: первые 24 месяца по ставке ${baseRate}% → с 25 месяца: ${postRate}%`;
+        hint.innerHTML = isHighDown ? `Льготный период: 24 мес. ${effectiveRate.toFixed(1)}% (снижена на 1%) → ${postRate}%` : `Льготный период: 24 мес. ${baseRate}% → ${postRate}%`;
     }
     let bonusHint = document.getElementById('downpaymentBonusHint');
-    if (isHighDown && currentMortgageType === 'subsidized') {
-        bonusHint.style.display = 'block';
-        bonusHint.innerHTML = `При взносе > 50.1% льготная ставка снижена на 1% (текущая льготная ставка: ${effectiveRate.toFixed(1)}%)`;
-    } else {
-        bonusHint.style.display = 'none';
-    }
+    bonusHint.style.display = isHighDown && currentMortgageType === 'subsidized' ? 'block' : 'none';
 }
 
 function calculateMonthlyPayment(debt, rate, months) {
     if (debt <= 0) return 0;
     if (rate === 0) return debt / months;
-    if (months <= 0) return debt;
     return debt * rate * Math.pow(1 + rate, months) / (Math.pow(1 + rate, months) - 1);
 }
 
 function calculateStandardAnnuity() {
     let propertyPrice = getCurrentPropertyPrice();
-    let downPaymentRaw = parseFloat(document.getElementById('downPayment').value) || 0;
-    let minPercent = getCurrentMinDownPercent();
-    let minDown = propertyPrice * minPercent / 100;
-    let downPayment = downPaymentRaw < minDown && propertyPrice > 0 ? Math.round(minDown) : downPaymentRaw;
-    if (propertyPrice > 0 && downPayment < minDown) downPayment = Math.round(minDown);
-    
+    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
     let annualRate = parseFloat(document.getElementById('interestRate').value) || 20.7;
-    
     let totalMonths = getTotalMonths();
     let loanAmount = Math.max(0, propertyPrice - downPayment);
     document.getElementById('loanAmount').textContent = formatMoney(loanAmount);
@@ -290,11 +275,7 @@ function calculateStandardAnnuity() {
 
 function calculateTrench() {
     let propertyPrice = getCurrentPropertyPrice();
-    let downPaymentRaw = parseFloat(document.getElementById('downPayment').value) || 0;
-    let minDownPercent = MIN_DOWN_PAYMENT_TRENCH_PERCENT;
-    let minDown = propertyPrice * minDownPercent / 100;
-    let downPayment = downPaymentRaw < minDown ? Math.round(minDown) : downPaymentRaw;
-    if (propertyPrice > 0 && downPayment < minDown) downPayment = Math.round(minDown);
+    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
     let annualRate = parseFloat(document.getElementById('interestRate').value) || 20.7;
     let monthsTotal = getTotalMonths();
     let loanAmount = propertyPrice - downPayment;
@@ -342,9 +323,7 @@ function calculateTrench() {
 
 function calculateSubsidized() {
     let propertyPrice = getCurrentPropertyPrice();
-    let downPaymentRaw = parseFloat(document.getElementById('downPayment').value) || 0;
-    let minDown = propertyPrice * MIN_DOWN_PAYMENT_PERCENT / 100;
-    let downPayment = downPaymentRaw < minDown && propertyPrice > 0 ? Math.round(minDown) : downPaymentRaw;
+    let downPayment = parseFloat(document.getElementById('downPayment').value) || 0;
     let subsidyMonths = parseInt(document.getElementById('subsidyPeriodSelect').value);
     let postRate = parseFloat(document.getElementById('postSubsidyRate').value) || 20.7;
     let downPercent = propertyPrice > 0 ? (downPayment / propertyPrice) * 100 : 0;
@@ -453,7 +432,7 @@ function renderTrenchControls() {
     trenches.forEach((t) => {
         let amount = loan * t.share;
         let name = t.month === 0 ? 'Транш 1 (в день сделки)' : (t.month === 4 ? 'Транш 2 (через 4 мес.)' : (t.month === 8 ? 'Транш 3 (через 8 мес.)' : 'Транш 4 (через 12 мес.)'));
-        html += `<div class="trench-row-edit"><label>${name}:</label><input type="text" value="${formatMoney(amount)}" readonly><div style="font-size:11px; color:#2c6e2c;"></div></div>`;
+        html += `<div class="trench-row-edit"><label>${name}:</label><input type="text" value="${formatMoney(amount)}" readonly></div>`;
     });
     document.getElementById('trenchControls').innerHTML = html;
 }
@@ -464,23 +443,16 @@ function onMortgageTypeChange() {
     for (let r of radios) if (r.checked) currentMortgageType = r.value;
     document.getElementById('trenchInfo').style.display = currentMortgageType === 'trench' ? 'block' : 'none';
     document.getElementById('subsidizedInfo').style.display = currentMortgageType === 'subsidized' ? 'block' : 'none';
-    
     let optionLabel = document.getElementById('trenchPriceOptionLabel');
-    if (currentMortgageType === 'trench') {
-        optionLabel.style.display = 'inline-flex';
-    } else {
-        optionLabel.style.display = 'none';
-    }
-    
+    optionLabel.style.display = currentMortgageType === 'trench' ? 'inline-flex' : 'none';
     if (currentMortgageType === 'subsidized') {
         document.getElementById('interestRate').disabled = true;
-        document.getElementById('interestRate').style.background = '#f3f4f6';
         document.getElementById('rateHintText').innerText = '(для субсидированной)';
     } else {
         document.getElementById('interestRate').disabled = false;
-        document.getElementById('interestRate').style.background = '#fff';
         document.getElementById('rateHintText').innerText = currentMortgageType === 'trench' ? '(для траншевой)' : '(базовая)';
     }
+    updatePercentRangeLimits();
     loadValuesForCurrentType();
     calculateMortgage();
 }
@@ -523,18 +495,46 @@ document.getElementById('discountPercent').addEventListener('input', updatePrice
 document.getElementById('discountRub').addEventListener('input', updatePrices);
 document.getElementById('trenchPriceMarkup').addEventListener('change', () => { updatePrices(); saveCurrentValues(); });
 document.getElementById('propertyPrice').addEventListener('input', () => { autoAdjustDownPayment(); calculateMortgage(); saveCurrentValues(); });
-document.getElementById('downPayment').addEventListener('input', () => { 
+
+document.getElementById('downPayment').addEventListener('input', () => {
     let propertyPrice = getCurrentPropertyPrice();
     let downVal = parseFloat(document.getElementById('downPayment').value) || 0;
-    if (propertyPrice > 0 && downVal > propertyPrice) {
-        document.getElementById('downPayment').value = Math.round(propertyPrice);
+    if (propertyPrice > 0 && downVal > propertyPrice) document.getElementById('downPayment').value = Math.round(propertyPrice);
+    updatePercentFromDownPayment();
+    updateAnnuityRateBasedOnDownPayment();
+    calculateMortgage(); saveCurrentValues();
+    if(currentMortgageType==='trench') renderTrenchControls();
+    if(currentMortgageType==='subsidized') updateSubsidyHintAndBonus();
+});
+
+const percentInput = document.getElementById('downPaymentPercent');
+percentInput.addEventListener('blur', function() {
+    applyPercentValue();
+});
+percentInput.addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        applyPercentValue();
+    }
+});
+
+document.getElementById('downPaymentPercentRange').addEventListener('input', function(e) {
+    let percent = parseFloat(e.target.value);
+    let minPercent = currentMortgageType === 'trench' ? MIN_DOWN_PAYMENT_TRENCH_PERCENT : MIN_DOWN_PAYMENT_PERCENT;
+    percent = Math.min(100, Math.max(minPercent, percent));
+    document.getElementById('downPaymentPercent').value = percent.toFixed(1);
+    let propertyPrice = getCurrentPropertyPrice();
+    if (propertyPrice > 0) {
+        let downAmount = Math.round(propertyPrice * percent / 100);
+        document.getElementById('downPayment').value = downAmount;
     }
     updateAnnuityRateBasedOnDownPayment();
     calculateMortgage(); 
-    saveCurrentValues(); 
-    if(currentMortgageType==='trench') renderTrenchControls(); 
+    saveCurrentValues();
+    if(currentMortgageType==='trench') renderTrenchControls();
     if(currentMortgageType==='subsidized') updateSubsidyHintAndBonus();
 });
+
 document.getElementById('interestRate').addEventListener('input', () => { calculateMortgage(); saveCurrentValues(); });
 document.getElementById('postSubsidyRate').addEventListener('input', () => { if(currentMortgageType==='subsidized') { updateSubsidyHintAndBonus(); calculateMortgage(); saveCurrentValues(); } });
 document.getElementById('subsidyPeriodSelect').addEventListener('change', () => { if(currentMortgageType==='subsidized') { updateSubsidyHintAndBonus(); calculateMortgage(); saveCurrentValues(); } });
