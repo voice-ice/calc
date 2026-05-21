@@ -74,7 +74,7 @@ function updatePrices() {
     
     if (useMarkup && currentMortgageType === 'trench') {
         priceBeforeDvou = rawDiscounted * (1 + TRENCH_PRICE_MARKUP_PERCENT / 100);
-        noteText = `🔨 Для траншевой ипотеки применена наценка +${TRENCH_PRICE_MARKUP_PERCENT}% ${formatMoney(rawDiscounted)} → ${formatMoney(priceBeforeDvou)}`;
+        noteText = `Для траншевой ипотеки применена наценка +${TRENCH_PRICE_MARKUP_PERCENT}% ${formatMoney(rawDiscounted)} → ${formatMoney(priceBeforeDvou)}`;
     }
     
     let dvou = priceBeforeDvou * DVOU_PERCENT / 100;
