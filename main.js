@@ -214,14 +214,14 @@ function updateSubsidyHintAndBonus() {
     let effectiveRate = isHighDown ? baseRate - 1.0 : baseRate;
     let hint = document.getElementById('subsidyHint');
     if (months === 12) {
-        hint.innerHTML = isHighDown ? `✨ Льготный период: первые 12 месяцев по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 13 месяца: ${postRate}%` : `✨ Льготный период: первые 12 месяцев по ставке ${baseRate}% → с 13 месяца: ${postRate}%`;
+        hint.innerHTML = isHighDown ? ` Льготный период: первые 12 месяцев по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 13 месяца: ${postRate}%` : `✨ Льготный период: первые 12 месяцев по ставке ${baseRate}% → с 13 месяца: ${postRate}%`;
     } else {
-        hint.innerHTML = isHighDown ? `✨ Льготный период: первые 24 месяца по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 25 месяца: ${postRate}%` : `✨ Льготный период: первые 24 месяца по ставке ${baseRate}% → с 25 месяца: ${postRate}%`;
+        hint.innerHTML = isHighDown ? ` Льготный период: первые 24 месяца по ставке ${effectiveRate.toFixed(1)}% (снижена на 1% за взнос >50%) → с 25 месяца: ${postRate}%` : `✨ Льготный период: первые 24 месяца по ставке ${baseRate}% → с 25 месяца: ${postRate}%`;
     }
     let bonusHint = document.getElementById('downpaymentBonusHint');
     if (isHighDown && currentMortgageType === 'subsidized') {
         bonusHint.style.display = 'block';
-        bonusHint.innerHTML = `🏆 При взносе > 50.1% льготная ставка снижена на 1% (текущая льготная ставка: ${effectiveRate.toFixed(1)}%)`;
+        bonusHint.innerHTML = `При взносе > 50.1% льготная ставка снижена на 1% (текущая льготная ставка: ${effectiveRate.toFixed(1)}%)`;
     } else {
         bonusHint.style.display = 'none';
     }
