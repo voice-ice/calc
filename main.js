@@ -17,10 +17,10 @@ let savedValues = {
 };
 
 let trenches = [
-    { month: 0, share: 0.253 },   
-    { month: 4, share: 0.249 },   
-    { month: 8, share: 0.249 },   
-    { month: 12, share: 0.249 }   
+    { month: 0, share: 0.25 },   
+    { month: 4, share: 0.25 },   
+    { month: 8, share: 0.25 },   
+    { month: 12, share: 0.25 }   
 ];
 
 function getBaseSubsidizedRate(months) { return months === 12 ? 15.2 : 17.2; }
